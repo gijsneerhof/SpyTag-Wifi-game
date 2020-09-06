@@ -161,7 +161,8 @@ static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 		system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
 		system_os_post(procTaskPrio, 0, 0);
 	}
-	begin_time -= 1;
+	begin_time--;
+	//begin_time -= 1;
 }
 
 static void ICACHE_FLASH_ATTR begin_game_func_blob(void *arg)
@@ -336,7 +337,7 @@ game_options(void)
 		os_timer_disarm(&begin_timer);
 		os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
 		//was 45000 now 20000
-		os_timer_arm(&begin_timer, 20, 1);
+		os_timer_arm(&begin_timer, 20000, 1);
 		begin_game_func(1);
 		make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
 		make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
