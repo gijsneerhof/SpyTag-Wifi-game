@@ -114,20 +114,20 @@ rainb12=1<<2;
 void ICACHE_FLASH_ATTR SEND_WS_12_0() {
     uint8_t time;
     time = 4;
-    while (time–)
+    while (time--)
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 4, rainb12);
     time = 9;
-    while (time–)
+    while (time--)
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 8, rainb12);
 }
 
 void ICACHE_FLASH_ATTR SEND_WS_12_1() {
     uint8_t time;
     time = 8;
-    while (time–)
+    while (time--)
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 4, rainb12);
     time = 6;
-    while (time–)
+    while (time--)
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 8, rainb12);
 }
 
@@ -138,7 +138,7 @@ void ICACHE_FLASH_ATTR WS2812OutBuffer(uint8_t * buffer, uint16_t length, uint16
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 8, rainb12);
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 8, rainb12);
         WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 8, rainb12);
-        while (repetition–) {
+        while (repetition--) {
             for (i = 0; i < length; i++) {
                 uint8_t mask = 0x80;
                 uint8_t byte = buffer[i];
