@@ -10,6 +10,6 @@
 
 //You will have to 	os_intr_lock();  	os_intr_unlock();
 
-void WS2812OutBuffer( uint8_t * buffer, uint16_t length, uint_16 light_level );
+void WS2812OutBuffer( uint8_t * buffer, uint16_t length, uint16_t light_level );
 
 #endif
