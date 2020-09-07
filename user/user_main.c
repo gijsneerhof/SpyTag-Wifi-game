@@ -102,7 +102,7 @@ int undead_max = 460;
 //4800
 int power_depletion = 4800;
 
-int light_level = 0x30;
+int light_level = 0x60;
 
 bool show_time = false;
 
@@ -140,13 +140,12 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 	count_down_time -= 1;
 }
 
-int begin_time = 8;
+int begin_time = 16;
 //this function sets the begin grace period and counts down. When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
 	
-	make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
-	make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
+	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 	if (begin_time <= 0)
 	{
@@ -305,8 +304,7 @@ game_options(void)
 		//was 45000 now 20000
 		os_timer_arm(&begin_timer, 20000, 1);
 		begin_game_func(1);
-		make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
-		make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
+		make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_timer);
 	}
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
@@ -368,8 +366,7 @@ user_scan(void)
 			if (show_time)
 			{
 				show_time = false;
-				make_radar_full(leds, 1, 0, 0, 0, 8);
-				make_radar_full(leds, 0, 0, 0, 0, 8);
+				make_radar_full(leds, 1, 0, 0, 0, 16);
 			}
 			button_pressed = false;
 		}
@@ -458,14 +455,13 @@ void make_radar(char leds[], int side, int r, int g, int b, int num)
 	}
 }
 
-void make_radar_full(char leds[], int side, int r, int g, int b, int num)
+//give all leds up to num the color (r,g,b)
+void make_radar_full(char leds[], int r, int g, int b, int num)
 {
-	if (side == 0)
-	{
 		int a = 7;
-		for (a = 7; a >= 0; a = a - 1)
+		for (a = 16; a >= 0; a = a - 1)
 		{
-			if (7 - a < num)
+			if (16 - a < num)
 			{
 				make_lights(leds, a, r, g, b);
 			}
@@ -474,23 +470,7 @@ void make_radar_full(char leds[], int side, int r, int g, int b, int num)
 				make_lights(leds, a, 0, 0, 0);
 			}
 		}
-	}
 
-	else if (side == 1)
-	{
-		int a = 8;
-		for (a = 8; a < 16; a = a + 1)
-		{
-			if (a < num + 8)
-			{
-				make_lights(leds, a, r, g, b);
-			}
-			else
-			{
-				make_lights(leds, a, 0, 0, 0);
-			}
-		}
-	}
 }
 
 int get_radar_value(int values[], float distance)
@@ -575,7 +555,7 @@ void scan_done(void *arg, STATUS status)
 			beacon->rssi[0] = beacon->rssi[1];
 			beacon->rssi[1] = beacon->rssi[2];
 			beacon->rssi[2] = bss_link->rssi;
-			
+			//running average of 3 samples
 			float average = (beacon->rssi[0] + beacon->rssi[1] + beacon->rssi[2]) / 3.0;
 
 			if (strcmp(ssid, states[ZOMBIE]) == 0 || strcmp(ssid, states[SUPERZOMBIE]) == 0)
@@ -652,17 +632,7 @@ void scan_done(void *arg, STATUS status)
 
 	if (show_time == true)
 	{
-		if (count_down_time >= 8)
-		{
-
-			make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], count_down_time - 8);
-			make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
-		}
-		else
-		{
-			make_radar_full(leds, 1, 0, 0, 0, 8);
-			make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], count_down_time);
-		}
+		make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], count_down_time);
 		WS2812OutBuffer(leds, sizeof(leds), light_level);
 	}
 
