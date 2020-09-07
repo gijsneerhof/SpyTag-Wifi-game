@@ -10,7 +10,18 @@ more info can be found here for how to accomplish this: https://github.com/con-f
 
 ## Hardware
 
-A [Fritzing](http://fritzing.org) diagram of the hardware is provided as a wiring reference to connect the ESP-201/ESP8266, WS2812 8 channel LED strips, buttons, an switched battery pack. Please see the `hardware` subdirectory in the repo.
+Coming soon!
 
-## Support
- If you would like to support this project, please consider taking a look at the patreon here: http://patreon.com/adangert
+## Instructions
+
+### Installation
+
+Espressif IDF toolchain
+
+### Usage
+
+The function `user_init()` in `user/user_main.c` will be run first. 
+
+### Building
+
+use `make burn` to upload to the ESP8266 controller. 
