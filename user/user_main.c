@@ -50,7 +50,6 @@ static volatile os_timer_t begin_timer;
 
 static volatile os_timer_t game_timer;
 static volatile os_timer_t end_timer;
-static volatile os_timer_t begin_blob_timer;
 
 static struct espconn *pUdpServer;
 usr_conf_t *UsrCfg = (usr_conf_t *)(SETTINGS.UserData);
@@ -76,8 +75,6 @@ int normal_radar[7] = {-90, -85, -80, -70, -60, -50, -40};
 int human_radar[7] = {-95, -90, -85, -80, -70, -60, -55};
 
 int dead_amount_inc[7] = {40, 80, 120, 160, 200, 240, 280};
-
-int blob_radar[7] = {348, 690, 1032, 1374, 1716, 2058, 2400};
 
 int undead_amount_inc[8] = {0, 66, 128, 190, 252, 314, 376, 438};
 
@@ -115,12 +112,9 @@ int times[8] = {5, 10, 15, 20, 30, 40, 50, 60};
 int sensitivity_index = 5;
 float sensitivities[7] = {-30.0, -32.0, -34.0, -36.0, -38.0, -40.0, -42.0};
 
-int blob_health = 300;
 
 void ICACHE_FLASH_ATTR user_scan(void);
-void ICACHE_FLASH_ATTR user_scan_blob(void);
 
-//int ICACHE_FLASH_ATTR StartMDNS();
 
 void user_rf_pre_init(void)
 { /*nothing*/
@@ -147,8 +141,10 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 }
 
 int begin_time = 8;
+//this function sets the begin grace period and counts down. When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
+	
 	make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
 	make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
@@ -161,28 +157,12 @@ static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 		system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
 		system_os_post(procTaskPrio, 0, 0);
 	}
-	begin_time--;
-	//begin_time -= 1;
-}
-
-static void ICACHE_FLASH_ATTR begin_game_func_blob(void *arg)
-{
-	make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
-	make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
-	WS2812OutBuffer(leds, sizeof(leds), light_level);
-	if (begin_time <= 0)
-	{
-		os_timer_disarm(&begin_timer);
-		os_timer_disarm(&game_timer);
-		os_timer_setfn(&game_timer, (os_timer_func_t *)gameTimer, NULL);
-		os_timer_arm(&game_timer, (times[timer_index] * 60 * 1000) / 16, 1);
-		system_os_task(user_scan_blob, procTaskPrio, procTaskQueue, procTaskQueueLen);
-		system_os_post(procTaskPrio, 0, 0);
-	}
 	begin_time -= 1;
 }
 
+
 int end_state = 0;
+//this function creates the endstate animation
 static void ICACHE_FLASH_ATTR end_game_func(void *arg)
 {
 	if (end_state % 2 == 0)
@@ -250,7 +230,6 @@ void make_lights(char light_array[], int light_num, int r, int g, int b)
 }
 
 void scan_done(void *arg, STATUS status);
-void scan_done_blob(void *arg, STATUS status);
 
 void ICACHE_FLASH_ATTR change_state(void)
 {
@@ -292,16 +271,8 @@ init_game(void)
 
 	if (!button_pressed && buttons == ABUTTON)
 	{
-		if (state == ZOMBIE || state == HUMAN || state == DEAD || state == SUPERZOMBIE)
-		{
-			system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
-			system_os_post(procTaskPrio, 0, 0);
-		}
-		else
-		{
-			system_os_task(user_scan_blob, procTaskPrio, procTaskQueue, procTaskQueueLen);
-			system_os_post(procTaskPrio, 0, 0);
-		}
+		system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
+		system_os_post(procTaskPrio, 0, 0);
 	}
 	else
 	{
@@ -322,11 +293,6 @@ game_options(void)
 
 	state = HUMAN;
 
-	if (options_state != 3)
-	{
-		state = NOTEAM;
-	}
-
 	if (options_state < 3)
 	{
 		os_delay_us(1000);
@@ -342,68 +308,10 @@ game_options(void)
 		make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
 		make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
 	}
-	else if (options_state == 4)
-	{
-		os_timer_disarm(&begin_timer);
-		os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func_blob, NULL);
-		//was 45000 now 20000
-		os_timer_arm(&begin_timer, 10, 1);
-		begin_game_func_blob(1);
-		make_radar_full(leds, 1, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
-		make_radar_full(leds, 0, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], 8);
-	}
+
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 }
 
-void ICACHE_FLASH_ATTR
-user_scan_blob(void)
-{
-
-	int buttons = GetButtons();
-	//208, no buttons
-	//221, A button
-	//210, B button
-	//223, both buttons
-	if (!button_pressed && buttons == BOTHBUTTONS)
-	{
-		if (light_level == 0x0f)
-		{
-			light_level = 0x01;
-		}
-		else if (light_level == 0x01)
-		{
-			light_level = 0x00;
-		}
-		else if (light_level == 0x00)
-		{
-			light_level = 0x30;
-		}
-		else if (light_level == 0x30)
-		{
-			light_level = 0x0f;
-		}
-		button_pressed = true;
-	}
-
-	if (prev_state != state)
-	{
-		change_state();
-	}
-
-	if (button_pressed && buttons == NOBUTTONS)
-	{
-
-		button_pressed = false;
-	}
-
-	struct scan_config config;
-
-	memset(&config, 0, sizeof(config));
-	//config.ssid	=	"AI-THINKER_CC47D5";
-	config.channel = 1;
-
-	wifi_station_scan(&config, scan_done_blob);
-}
 
 void ICACHE_FLASH_ATTR
 user_scan(void)
@@ -623,119 +531,6 @@ int cool_adding = 4200;
 
 char macmap[15];
 
-void scan_done_blob(void	*arg,	STATUS	status)
-{
-  system_os_task(user_scan_blob, procTaskPrio, procTaskQueue, procTaskQueueLen);
-	uint8	ssid[33];
-	char	temp[128];
-
-	int closest_team_dist = -300;
-	int closest_team = REDTEAM;
-
-
-	if	(status	==	OK)	{
-  	struct	bss_info	*bss_link	=	(struct	bss_info	*)arg;
-
-  	while	(bss_link	!=	NULL)	{
-
-  					memset(ssid,	0,	33);
-  					if	(strlen(bss_link->ssid)	<=	32)
-  						memcpy(ssid,	bss_link->ssid,	strlen(bss_link->ssid));
-  					else
-  						memcpy(ssid,	bss_link->ssid,	32);
-
-            ets_sprintf(macmap, MACSTR, MAC2STR(bss_link->bssid));
-            struct beacon_stat * beacon = hasht_get( hashtable, macmap );
-            if (!beacon){
-              int first_rssi[3] = {bss_link->rssi,bss_link->rssi,bss_link->rssi};
-
-              struct beacon_stat b;
-              b.type = ssid;
-              b.rssi[0] = bss_link->rssi;
-              b.rssi[1] = bss_link->rssi;
-              b.rssi[2] = bss_link->rssi;
-
-              ht_set( hashtable, macmap, &b );
-              beacon = &b;
-            }
-            beacon->rssi[0] = beacon->rssi[1];
-            beacon->rssi[1] = beacon->rssi[2];
-            beacon->rssi[2] = bss_link->rssi;
-
-            float average = (beacon->rssi[0] + beacon->rssi[1] + beacon->rssi[2])/3.0;
-
-
-						if(strcmp(ssid, states[state]) == 0)
-						{
-							blob_health += (int)(100 + average);
-							cool_adding += 1;
-							if (average > closest_team_dist)
-							{
-								closest_team_dist = average;
-								closest_team = state;
-							}
-						}else{
-
-							if (average > closest_team_dist)
-							{
-
-								if (strcmp(ssid, states[REDTEAM]) == 0)
-								{
-									blob_health -= (100 + average);
-									cool_adding += 1;
-									closest_team_dist = average;
-									closest_team = REDTEAM;
-								}else if (strcmp(ssid, states[GREENTEAM]) == 0)
-								{
-									blob_health -= (100 + average);
-									closest_team_dist = average;
-									cool_adding += 1;
-									closest_team = GREENTEAM;
-								}else if (strcmp(ssid, states[BLUETEAM]) == 0)
-								{
-									blob_health -= (100 + average);
-									cool_adding += 1;
-									closest_team_dist = average;
-									closest_team = BLUETEAM;
-								}
-
-							}
-						}
-
-  					bss_link	=	bss_link->next.stqe_next;
-  	}
-	}	else	{
-					printf("scan	fail	!!!\r\n");
-	}
-
-		if (blob_health < 0 )
-		{
-
-			blob_health = 300;
-			state = closest_team;
-
-		}
-
-		if (blob_health > 310 )
-		{
-
-			blob_health = 310;
-
-		}
-
-		int human_num = get_radar_value(zombie_health_inc, blob_health);
-		make_radar(leds, 0, colors[state*3],colors[state*3+1],colors[state*3+2], 7);
-
-		make_radar(leds, 1, colors[state*3],colors[state*3+1],colors[state*3+2], 7);
-
-		make_lights(leds, 0, colors[state*3],colors[state*3+1],colors[state*3+2]);
-		make_lights(leds, 15, colors[state*3],colors[state*3+1],colors[state*3+2]);
-
-
-	WS2812OutBuffer( leds, sizeof(leds), light_level );
-
-  system_os_post(procTaskPrio, 0, 0 );
-}
 
 void scan_done(void *arg, STATUS status)
 {
@@ -780,7 +575,7 @@ void scan_done(void *arg, STATUS status)
 			beacon->rssi[0] = beacon->rssi[1];
 			beacon->rssi[1] = beacon->rssi[2];
 			beacon->rssi[2] = bss_link->rssi;
-
+			
 			float average = (beacon->rssi[0] + beacon->rssi[1] + beacon->rssi[2]) / 3.0;
 
 			if (strcmp(ssid, states[ZOMBIE]) == 0 || strcmp(ssid, states[SUPERZOMBIE]) == 0)
@@ -920,16 +715,19 @@ void user_init(void)
 
 	if (buttons == NOBUTTONS)
 	{
+		//no button --> go to game options
 		system_init_done_cb(game_options);
 	}
 	else if (buttons == BOTHBUTTONS)
 	{
+		//both buttons --> init game & set no team
 		button_pressed = true;
 		options_state = 4;
 		system_init_done_cb(init_game);
 	}
 	else if (buttons == BBUTTON)
 	{
+		//b button --> go to game options & set no team
 		button_pressed = true;
 		options_state = 4;
 		system_init_done_cb(game_options);
