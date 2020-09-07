@@ -140,14 +140,14 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 	count_down_time -= 1;
 }
 
-int begin_time = 16;
+int begin_time = 15;
 //this function sets the begin grace period and counts down. When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
 	
 	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
-	if (begin_time <= 0)
+	if (begin_time == 0)
 	{
 		os_timer_disarm(&begin_timer);
 		os_timer_disarm(&game_timer);
