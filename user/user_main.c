@@ -221,6 +221,7 @@ void ICACHE_FLASH_ATTR charrx(uint8_t c)
 	//Called from UART.
 }
 
+//sets single led (r,g,b)
 void make_lights(char light_array[], int light_num, int r, int g, int b)
 {
 	light_array[light_num * 3] = g;
@@ -228,8 +229,10 @@ void make_lights(char light_array[], int light_num, int r, int g, int b)
 	light_array[light_num * 3 + 2] = b;
 }
 
+//callback for wifi scan done
 void scan_done(void *arg, STATUS status);
 
+//changes state, edits wifi ssid
 void ICACHE_FLASH_ATTR change_state(void)
 {
 	printf("changing state, state is now %d\n", state);
@@ -246,44 +249,8 @@ void ICACHE_FLASH_ATTR change_state(void)
 	wifi_softap_set_config_current(&softapconfig);
 }
 
-void ICACHE_FLASH_ATTR
-init_game(void)
-{
-	system_os_task(init_game, procTaskInit, procTaskQueue, procTaskQueueLen);
-	int buttons = GetButtons();
-	//208, no buttons
-	//221, A button
-	//210, B button
-	//223, both buttons
 
-	if (!button_pressed && buttons == BBUTTON)
-	{
-		state = (state + 1) % 8;
-		button_pressed = true;
-		change_state();
-	}
-
-	if (button_pressed && buttons == NOBUTTONS)
-	{
-		button_pressed = false;
-	}
-
-	if (!button_pressed && buttons == ABUTTON)
-	{
-		system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
-		system_os_post(procTaskPrio, 0, 0);
-	}
-	else
-	{
-		make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
-		WS2812OutBuffer(leds, sizeof(leds), light_level);
-		os_delay_us(1000);
-		system_os_post(procTaskInit, 0, 0);
-	}
-}
-
-int options_state = 3;
-
+//called after user_init
 void ICACHE_FLASH_ATTR
 game_options(void)
 {
@@ -292,25 +259,23 @@ game_options(void)
 
 	state = HUMAN;
 
-	if (options_state < 3)
-	{
-		os_delay_us(1000);
-		system_os_post(procTaskopts, 0, 0);
+	if(buttons == BBUTTON){
+		state = ZOMBIE;
+		change_state();
 	}
-	else if (options_state == 3)
-	{
-		os_timer_disarm(&begin_timer);
-		os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
-		//was 45000 now 20000
-		os_timer_arm(&begin_timer, 20000, 1);
-		begin_game_func(1);
-		make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_timer);
-	}
+
+	os_timer_disarm(&begin_timer);
+	os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
+	//was 45000 now 20000
+	os_timer_arm(&begin_timer, 20000, 1);
+	begin_game_func(1);
+	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_timer);
+
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 }
 
-
+//scans for wifi 
 void ICACHE_FLASH_ATTR
 user_scan(void)
 {
@@ -381,6 +346,7 @@ user_scan(void)
 	}
 }
 
+//not used
 void make_radar_gen(char leds[], int side, int r, int g, int b, int num, int max, int led_num)
 {
 	if (side == 0)
@@ -420,6 +386,7 @@ void make_radar_gen(char leds[], int side, int r, int g, int b, int num, int max
 	}
 }
 
+//set single LED
 void make_radar(char leds[], int side, int r, int g, int b, int num)
 {
 	if (side == 0)
@@ -683,25 +650,7 @@ void user_init(void)
 	hashtable = hasht_create(300);
 	// wifi scan has to after system init done.
 
-	if (buttons == NOBUTTONS)
-	{
-		//no button --> go to game options
-		system_init_done_cb(game_options);
-	}
-	else if (buttons == BOTHBUTTONS)
-	{
-		//both buttons --> init game & set no team
-		button_pressed = true;
-		options_state = 4;
-		system_init_done_cb(init_game);
-	}
-	else if (buttons == BBUTTON)
-	{
-		//b button --> go to game options & set no team
-		button_pressed = true;
-		options_state = 4;
-		system_init_done_cb(game_options);
-	}
+	system_init_done_cb(game_options);
 	//Timer example
 	//os_timer_disarm(&some_timer);
 	//os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
