@@ -269,7 +269,7 @@ game_options(void)
 	//was 45000 now 20000
 	os_timer_arm(&begin_timer, 20000, 1);
 	begin_game_func(1);
-	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_timer);
+	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
 
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
@@ -639,6 +639,7 @@ void user_init(void)
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
 	GPIO_OUTPUT_SET(GPIO_ID_PIN(2), 0);
 	printf("ESP8266	chip ID:0x%x\n", system_get_chip_id());
+	make_radar_full(leds, 0,0,0,16);
 }
 
 //There is no code in this project that will cause reboots if interrupts are disabled.
