@@ -405,6 +405,7 @@ void make_radar(char leds[], int side, int r, int g, int b, int num)
 //give all leds up to num the color (r,g,b)
 void make_radar_full(char leds[], int r, int g, int b, int num)
 {
+		int a = 16;
 		for (a = 16; a >= 0; a = a - 1)
 		{
 			if (16 - a < num)
