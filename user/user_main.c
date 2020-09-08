@@ -263,7 +263,7 @@ game_options(void)
 		state = ZOMBIE;
 		change_state();
 	}
-
+	// %todo: do not start game until start signal is received --> 
 	os_timer_disarm(&begin_timer);
 	os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
 	//was 45000 now 20000
