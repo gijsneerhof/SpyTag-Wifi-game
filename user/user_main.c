@@ -299,27 +299,6 @@ user_scan(void)
 			show_time = true;
 		}
 
-		if (!button_pressed && buttons == BOTHBUTTONS)
-		{
-			if (light_level == 0x0f)
-			{
-				light_level = 0x01;
-			}
-			else if (light_level == 0x01)
-			{
-				light_level = 0x00;
-			}
-			else if (light_level == 0x00)
-			{
-				light_level = 0x30;
-			}
-			else if (light_level == 0x30)
-			{
-				light_level = 0x0f;
-			}
-			button_pressed = true;
-		}
-
 		if (prev_state != state)
 		{
 			printf("WOOP PREV STATE %d is not state %d changing\n", prev_state, state);
