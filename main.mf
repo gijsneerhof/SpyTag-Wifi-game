@@ -1,53 +1,33 @@
 define USAGE
 Usage: make [command] [VARIABLES]
 
-all......... Build the binaries
-clean....... Clean the binaries
-purge....... Clean the binaries and web stuff
-debug....... Build a .map and .lst file.  Useful for seeing what's going on
-             behind the scenes.
-burn ....... Write firmware to chip using a regular serial port
-burn_cutecom Write firmware to chip using a regular serial port, killing and
-             starting cutecom, a serial terminal
-build_burn . Build the binaries then execute burn_cutecom
-burnweb .... Write data for the Web-GUI to chip using a regular serial
-             port
-netburn .... Same as 'burn' but transfer firmware over the network rather
-             than the serial port (if supported by the existing firmware
-             on the chip)
-netweb ..... Same as 'burnweb' but transfer data over network if supported
-             by firmware currently on the chip
-getips ..... Get a list with IPs of esp82xxs connected to your network
-project .... Make the current working direcotry an esp82xx project
-gitproject . Same as 'make project' but also initialiezes the current folder
-             as git repository and pushes it to GIT_ORIGIN.
-             Example:
-                 make gitproject GIT_ORIGIN=https://github.com/USER/YREPO.git
-cleanproject Remove the use* and web folders
-usbburn .... Burn via PRE-RELEASE USB loader (will probably change)
-usbweb ..... Burn webpage by PRE-RELEASE USB loader (will probably change)
-initdefault  Burn default initial data to ROM (may be needed after erase)
-init3v3 .... Burn default values to rom but for use with system_get_vdd33
-erase ...... Totally erase chip.
-wipechip.... Write zeros to the chip
-getips ..... Detect pssible IPs for ESP82XX modules, needs nmap, takes time
-burnitall .. initdefault + burnweb + burn as a single run.
-dumprom .... read the rom from the chip
-bump_submodule . Update the git submodules
+all....... Build the binaries
+debug..... Build a .map and .lst file.  Useful for seeing what's going on
+           behind the scenes.
+burn ..... Write firmware to chip using a regular serial port
+burnweb .. Write data for the Web-GUI to chip using a regular serial
+           port
+netburn .. Same as 'burn' but transfer firmware over the network rather
+           than the serial port (if supported by the existing firmware
+           on the chip)
+netweb ... Same as 'burnweb' but transfer data over network if supported
+           by firmware currently on the chip
+getips ... Get a list with IPs of esp82xxs connected to your network
+usbburn .. Burn via PRE-RELEASE USB loader (will probably change)
+usbweb ... Burn webpage by PRE-RELEASE USB loader (will probably change)
 
 
-More commands: all, clean, purge, dumprom, cleanproject
+More commands: all, clean, purge, dumprom
 endef
 
-.PHONY : all clean purge netburn burnweb burn $(BIN_TARGET) netweb getips help project gitproject cleanproject build_burn burn_cutecom
-
+.PHONY : all clean cleanall netburn burnweb burn $(BIN_TARGET) netweb getips help
 
 FW_FILE1 = image.elf-0x00000.bin
-FW_FILE2 = image.elf-0x10000.bin
+FW_FILE2 = image.elf-0x40000.bin
 TARGET = image.elf
 
 
-SRCS +=  esp82xx/fwsrc/uart.c \
+SRCS =  esp82xx/fwsrc/uart.c \
 	esp82xx/fwsrc/esp82xxutil.c \
 	esp82xx/fwsrc/flash_rewriter.c \
 	esp82xx/fwsrc/http.c \
@@ -56,37 +36,32 @@ SRCS +=  esp82xx/fwsrc/uart.c \
 	esp82xx/fwsrc/mdns.c \
 	esp82xx/fwsrc/mfs.c \
 	user/custom_commands.c \
-	user/user_main.c
+	user/user_main.c \
+	user/ws2812.c \
+	user/gpio_buttons.c
 
-LIBS += main lwip ssl upgrade net80211 wpa phy lwip crypto c espnow
+LIBS = main lwip ssl upgrade net80211 wpa phy lwip crypto
 ifneq ($(CUSTOMPP), 1)
 	LIBS += pp
 endif
 
 INCL = $(SDK)/include esp82xx/include .
+LINKERSCRIPT ?= $(SDK)/ld/eagle.app.v6.ld
 
-CFLAGS = -mlongcalls -Os $(addprefix -I,$(INCL) $(call uniq, $(patsubst %/,%,$(dir $(SRCS))))) $(OPTS) -DVERSSTR='$(VERSSTR)' -g
+CFLAGS = -mlongcalls -Os $(addprefix -I,$(INCL) $(call uniq, $(patsubst %/,%,$(dir $(SRCS))))) $(OPTS) -DVERSSTR='$(VERSSTR)'
 
 LDFLAGS_CORE = -Wl,--relax -Wl,--gc-sections -nostdlib -L$(XTLIB) \
 	-L$(XTGCCLIB) $(addprefix $(SDK)/lib/lib,$(addsuffix .a,$(LIBS))) \
-	$(XTGCCLIB) -T $(LINKERSCRIPT) -T $(SDK)/ld/eagle.rom.addr.v6.ld
+	$(XTGCCLIB) -T $(LINKERSCRIPT)
 #	-flto -Wl,--relax -Wl,--gc-sections
 
 LINKFLAGS = $(LDFLAGS_CORE) -B$(XTLIB) $(LDFLAGS_POST)
 
 BIN_TARGET = $(PROJECT_NAME)-$(VERSION)-binaries.zip
 
-INIT_DATA_PLACE ?= 0x3FC000
-BLANK_DATA_PLACE1 ?= 0x3FB000
-BLANK_DATA_PLACE2 ?= 0x3FE000
-
 ifneq (,$(findstring -DDEBUG,$(OPTS)))
 $(warning Debug is enabled!)
 FLASH_WRITE_FLAGS += --verify
-endif
-
-ifeq ($(SDK),$(PWD)/esp82xx/toolchain/esp_nonos_sdk)
-SDK_DEP := esp82xx/toolchain/esp_nonos_sdk/Makefile
 endif
 
 ##########################################################################RULES
@@ -97,39 +72,11 @@ help :
 
 all : $(FW_FILE1) $(FW_FILE2)
 
-build_burn : all burn_cutecom
-
-esp82xx/libgcc_stripped.a :
-	cp $(GCC_FOLDER)/lib/gcc/xtensa-lx106-elf/$(ESP_GCC_VERS)/libgcc.a esp82xx/libgcc_stripped.a
-	$(AR) dv esp82xx/libgcc_stripped.a _muldi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _mulsf3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _divsi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _udivsi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _umodsi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _addsubsf3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _fixdfsi.o
-	#$(AR) dv esp82xx/libgcc_stripped.a _divsf3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _muldf3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _divdf3.o
-	#$(AR) dv esp82xx/libgcc_stripped.a _divsf3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _fixunssfsi.o
-	$(AR) dv esp82xx/libgcc_stripped.a _umoddi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _divdi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _udivdi3.o
-	$(AR) dv esp82xx/libgcc_stripped.a _truncdfsf2.o
-	#$(AR) dv esp82xx/libgcc_stripped.a _divsf3.o
-	#$(AR) dv esp82xx/libgcc_stripped.a _fixsfsi.o
-	$(AR) dv esp82xx/libgcc_stripped.a _floatunsidf.o
-	$(AR) dv esp82xx/libgcc_stripped.a _floatunsisf.o
-	$(AR) dv esp82xx/libgcc_stripped.a _floatsisf.o
-	$(AR) dv esp82xx/libgcc_stripped.a _floatsidf.o
-
-
 $(FW_FILE1) $(FW_FILE2) : $(TARGET)
 	PATH=$(PATH):$(FOLDERPREFIX) $(ESPTOOL_PY) elf2image $(TARGET)
 	@#no need to set things like dout, and memory size.  This data is copied from the ESP back to itself on write.
 
-$(TARGET) : $(SRCS) Makefile $(SDK_DEP) $(XTGCCLIB)
+$(TARGET) : $(SRCS) Makefile
 	$(CC) $(CFLAGS) $(SRCS) -flto $(LINKFLAGS) -o $@
 
 debug : $(TARGET)
@@ -140,34 +87,18 @@ debug : $(TARGET)
 ifeq ($(CHIP), 8285)
 burn : $(FW_FILE1) $(FW_FILE2)
 	$(info NOTICE: Currently burning for ESP8285.  If you are on a '66 reconfigure CHIP.)
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash $(FLASH_WRITE_FLAGS) -fs 8m -fm dout 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2))||(true)
-burn_cutecom:
-	-killall cutecom
-	$(info NOTICE: Currently burning for ESP8285.  If you are on a '66 reconfigure CHIP.)
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash $(FLASH_WRITE_FLAGS) -fs 8m -fm dout 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2))||(true)
-	-cutecom &
-burnitall :	
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash -fs 8m -fm dout $(FLASH_WRITE_FLAGS) 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2) $(MFS_PAGE_OFFSET) web/page.mpfs $(BLANK_DATA_PLACE1) $(SDK)/bin/blank.bin $(INIT_DATA_PLACE) esp82xx/toolchain/esp_nonos_sdk/bin/esp_init_data_default_v08.bin $(BLANK_DATA_PLACE2) $(SDK)/bin/blank.bin)||(true)
-
+	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash $(FLASH_WRITE_FLAGS) -fs 8m -fm dout 0x00000 $(FW_FILE1) 0x40000 $(FW_FILE2))||(true)
 else ifeq ($(CHIP), 8266)
-
 burn : $(FW_FILE1) $(FW_FILE2)
 	$(info NOTICE: Currently burning for ESP8266.  If you are on an '85 reconfigure CHIP.)
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash -fm dio $(FLASH_WRITE_FLAGS) 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2))||(true)
-burn_cutecom:
-	-killall cutecom
-	$(info NOTICE: Currently burning for ESP8266.  If you are on an '85 reconfigure CHIP.)
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash -fm dio $(FLASH_WRITE_FLAGS) 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2))||(true)
-	-cutecom &
-burnitall :
-	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash -fm dio $(FLASH_WRITE_FLAGS) 0x00000 $(FW_FILE1) 0x10000 $(FW_FILE2) $(BLANK_DATA_PLACE1) $(SDK)/bin/blank.bin $(INIT_DATA_PLACE) esp82xx/toolchain/esp_nonos_sdk/bin/esp_init_data_default_v08.bin $(BLANK_DATA_PLACE2) $(SDK)/bin/blank.bin $(MFS_PAGE_OFFSET) web/page.mpfs)||(true)
+	($(ESPTOOL_PY) $(FWBURNFLAGS) --port $(PORT) write_flash -fm dio $(FLASH_WRITE_FLAGS) 0x00000 $(FW_FILE1) 0x40000 $(FW_FILE2))||(true)
 else
 	$(error Error: Unknown chip '$(CHIP)')
 endif
 
 burnweb :
 	@cd web && $(MAKE) $(MFLAGS) $(MAKEOVERRIDES) clean page.mpfs  #Always rebuild page.mpfs
-	($(ESPTOOL_PY) $(FWBURNFLAGS)  --port $(PORT) write_flash $(MFS_PAGE_OFFSET) web/page.mpfs)||(true)
+	($(ESPTOOL_PY) $(FWBURNFLAGS)  --port $(PORT) write_flash $(PAGE_OFFSET) web/page.mpfs)||(true)
 #If you have space, MFS should live at 0x100000. It can also live at
 #0x10000. But, then it is limited to 180kB. You might need to do this if
 # you have a 512kB, or 1M ESP variant.
@@ -194,11 +125,7 @@ $(BIN_TARGET): $(FW_FILE1) $(FW_FILE2)
 	 && cd ..
 	zip $@ $(FW_FILE1) $(FW_FILE2) web/execute_reflash web/mfsmaker web/pushtodev web/page.mpfs
 
-wipechip :
-	dd if=/dev/zero of=/tmp/zeroes bs=16M count=1
-	($(ESPTOOL_PY) $(FWBURNFLAGS)  --port $(PORT) write_flash 0x0 /tmp/zeroes)||(true)
-
-getips :
+getips:
 	$(info Detecting possible IPs for ESP82XX modules...)
 	$(info Needs 'nmap' and takes some time especiallay if none are connected)
 	sudo nmap -sP 192.168.0.0/24 | grep -iP "espressif|esp" -B2 | grep -oP "(\d{1,3}\.){3,3}\d\d{1,3}"
@@ -209,50 +136,10 @@ clean :
 dumprom :
 	($(ESPTOOL_PY) $(FWBURNFLAGS)  --port $(PORT) read_flash 0 1048576 dump.bin)||(true)
 
-initdefault :
-	$(ESPTOOL_PY) $(BURNFLAGS) --port $(PORT) write_flash $(INIT_DATA_PLACE) esp82xx/toolchain/esp_nonos_sdk/bin/esp_init_data_default_v08.bin
-
-init3v3 :
-	$(ESPTOOL_PY) $(BURNFLAGS) --port $(PORT) write_flash $(INIT_DATA_PLACE) esp82xx/data/esp_init_data_adc33.bin
-
-erase:
-	$(ESPTOOL_PY) $(BURNFLAGS) --port $(PORT) erase_flash
-
 purge : clean
 	@cd web && $(MAKE) $(MFLAGS) $(MAKEOVERRIDES) clean
 	$(RM) $(FW_FILE1) $(FW_FILE2) $(BIN_TARGET)
 
 bump_submodule :
-	cd esp82xx; git pull origin master; git submodule update --init --recursive; cd ..
+	cd esp82xx; git pull origin master; cd ..
 
-Makefile : esp82xx/Makefile.example
-user.cfg : esp82xx/user.cfg.example
-web/page/index.html : esp82xx/web/page/index.html
-web/page/example.js : esp82xx/web/page/example.js
-
-Makefile user.cfg web/page/index.html web/page/example.js :
-	mkdir -p web/page user; \
-	cp -n $< $@; \
-	touch $@
-
-project : Makefile user.cfg web/page/index.html web/page/example.js
-	ln -s $(patsubst %,../../%,$(wildcard esp82xx/web/page/jquery-*)) ../../esp82xx/web/page/menuinterface.js web/page/ 2>/dev/null; \
-	ln -s $(patsubst %,../%,$(wildcard esp82xx/web/*)) web/ 2>/dev/null; \
-	cp -rn esp82xx/fwsrc/user/ .;
-
-ifeq ($(SDK),$(PWD)/esp82xx/toolchain/esp_nonos_sdk)
-$(SDK_DEP) :
-	@echo "Warning: SDK is missing, trying to get it from github:" >&2
-	@cd esp82xx && git submodule update --init --recursive
-endif
-
-
-gitproject: project
-	git init .
-	git add .
-	git remote add origin $(GIT_ORIGIN)
-	git commit -m 'Initial commit'
-	git push
-
-cleanproject :
-	$(RM) -r use* web/
