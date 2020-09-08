@@ -112,6 +112,7 @@ int times[8] = {5, 10, 15, 20, 30, 40, 50, 60};
 int sensitivity_index = 5;
 float sensitivities[7] = {-30.0, -32.0, -34.0, -36.0, -38.0, -40.0, -42.0};
 
+int begin_time = 15;
 
 void ICACHE_FLASH_ATTR user_scan(void);
 
@@ -140,7 +141,7 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 	count_down_time -= 1;
 }
 
-int begin_time = 15;
+
 //this function sets the begin grace period and counts down. When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
