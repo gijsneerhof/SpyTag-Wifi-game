@@ -404,7 +404,6 @@ void make_radar(char leds[], int side, int r, int g, int b, int num)
 //give all leds up to num the color (r,g,b)
 void make_radar_full(char leds[], int r, int g, int b, int num)
 {
-		int a = 7;
 		for (a = 16; a >= 0; a = a - 1)
 		{
 			if (16 - a < num)
@@ -629,17 +628,21 @@ void user_init(void)
 	hashtable = hasht_create(300);
 	// wifi scan has to after system init done.
 
+	gpio_init();
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+	GPIO_OUTPUT_SET(GPIO_ID_PIN(2), 0);
+	printf("ESP8266	chip ID:0x%x\n", system_get_chip_id());
+	printf("makeleds\n");
+	make_radar_full(leds, 0,0,0,16);
+	printf("made leds\n")
+	
 	system_init_done_cb(game_options);
 	//Timer example
 	//os_timer_disarm(&some_timer);
 	//os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
 	//os_timer_arm(&some_timer, 10000, 0);
 
-	gpio_init();
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
-	GPIO_OUTPUT_SET(GPIO_ID_PIN(2), 0);
-	printf("ESP8266	chip ID:0x%x\n", system_get_chip_id());
-	make_radar_full(leds, 0,0,0,16);
+
 }
 
 //There is no code in this project that will cause reboots if interrupts are disabled.
