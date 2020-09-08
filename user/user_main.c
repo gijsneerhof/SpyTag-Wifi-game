@@ -634,8 +634,8 @@ void user_init(void)
 	printf("ESP8266	chip ID:0x%x\n", system_get_chip_id());
 	printf("makeleds\n");
 	make_radar_full(leds, 0,0,0,16);
-	printf("made leds\n")
-	
+	printf("made leds\n");
+
 	system_init_done_cb(game_options);
 	//Timer example
 	//os_timer_disarm(&some_timer);
