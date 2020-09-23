@@ -147,7 +147,7 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
 	if(state == ZOMBIE){
-		make_radar_full(leds, colors[ZOMBIE]*3), colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
+		make_radar_full(leds, colors[ZOMBIE*3], colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
 	}else{
 		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
 	}
@@ -275,9 +275,9 @@ game_options(void)
 	os_timer_arm(&begin_timer, 2000, 1);
 	begin_game_func(1);
 	if(state == ZOMBIE){
-		make_radar_full(leds, colors[ZOMBIE]*3), colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
+		make_radar_full(leds, colors[ZOMBIE *3], colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
 	}else{
-	make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
+		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
 	}
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
