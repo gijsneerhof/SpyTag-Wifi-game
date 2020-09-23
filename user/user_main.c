@@ -80,14 +80,14 @@ int undead_amount_inc[8] = {0, 66, 128, 190, 252, 314, 376, 438};
 
 int zombie_health_inc[8] = {0, 600, 1200, 1800, 2400, 3000, 3600, 4200};
 
-int colors[12 * 3] = {0x01, 0x01, 0x01,
-					  0x00, 0x01, 0x00,
-					  0x00, 0x04, 0x00,
-					  0x01, 0x00, 0x00,
-					  0x01, 0x00, 0x00,
-					  0x00, 0x01, 0x00,
-					  0x00, 0x00, 0x01,
-					  0x01, 0x01, 0x01};
+int colors[12 * 3] = {0x01, 0x01, 0x01, //human
+					  0x00, 0x01, 0x00, //Zombie
+					  0x00, 0x04, 0x00, //Superzombie
+					  0x01, 0x00, 0x00, //Dead
+					  0x01, 0x00, 0x00, //BlueTeam
+					  0x00, 0x01, 0x00, //RedTeam
+					  0x00, 0x00, 0x01, //GreenTeam
+					  0x01, 0x01, 0x01};//NoTeam
 
 bool end_game = false;
 
@@ -142,11 +142,15 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 }
 
 
-//this function sets the begin grace period and counts down. When done, user_scan will be called
+//this function sets the begin grace period and counts down. When te timer ticks, this function will be called. 
+// When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
-	
-	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
+	if(state == ZOMBIE){
+		make_radar_full(leds, colors[ZOMBIE]*3), colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
+	}else{
+		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
+	}
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 	if (begin_time == 0)
 	{
@@ -267,11 +271,14 @@ game_options(void)
 	// %todo: do not start game until start signal is received --> 
 	os_timer_disarm(&begin_timer);
 	os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
-	//was 45000 now 20000
-	os_timer_arm(&begin_timer, 20000, 1);
+	//begin timer settings, should be 20000
+	os_timer_arm(&begin_timer, 2000, 1);
 	begin_game_func(1);
-	make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], begin_time);
-
+	if(state == ZOMBIE){
+		make_radar_full(leds, colors[ZOMBIE]*3), colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
+	}else{
+	make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
+	}
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 }
