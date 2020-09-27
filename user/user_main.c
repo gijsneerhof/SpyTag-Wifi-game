@@ -496,7 +496,6 @@ void scan_done(void *arg, STATUS status)
 
 		int zombie_num = get_radar_value(normal_radar, closest_zombie);
 		make_radar_full(leds, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num+1);
-		printf("num zombie leds %d, rssi %f", zombie_num, closest_zombie);
 
 
 	}
@@ -505,7 +504,6 @@ void scan_done(void *arg, STATUS status)
 
 		int human_num = get_radar_value(normal_radar, closest_human);
 		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num+1);
-		printf("num human leds %d, rssi %f", human_num, closest_human);
 	}
 
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
