@@ -76,7 +76,7 @@ int prev_state;
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
 
-int normal_radar[15] = {-300, -90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52, -50};
+int normal_radar[15] = {-300, -90, -85, -80, -75, -70, -68, -65, -62 -60, -58, -55, -52, -50, -46};
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
@@ -108,7 +108,7 @@ unsigned long score_cooldown = 0;
 int timer_index = 3; //set 15 minutes
 int times[8] = {5, 10, 15, 20, 30, 40, 50, 60};
 
-int sensitivity_index = 5; //set  -50
+int sensitivity_index = 3; //set  -42
 float sensitivities[7] = {-30.0, -34.0, -38.0, -42.0, -46.0, -50.0, -54.0};
 
 int begin_time = 15;
