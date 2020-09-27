@@ -169,6 +169,7 @@ int end_state = 0;
 //this function creates the endstate animation
 static void ICACHE_FLASH_ATTR end_game_func(void *arg)
 {
+	//show score!
 	if (end_state % 2 == 0)
 	{
 		make_lights(leds, 15, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
@@ -357,7 +358,7 @@ void make_radar_full(char leds[], int r, int g, int b, int num)
 int get_radar_value(int values[], float distance)
 {
 	int a = 0;
-	for (a = 0; a < 16; a = a + 1)
+	for (a = 0; a < 10; a = a + 1)
 	{
 		if (distance > values[a])
 		{
@@ -514,7 +515,7 @@ void scan_done(void *arg, STATUS status)
 		}
 
 		int zombie_num = get_radar_value(normal_radar, closest_zombie);
-		make_radar_full(leds, 0, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
+		make_radar_full(leds, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
 
 
 	}
@@ -522,7 +523,7 @@ void scan_done(void *arg, STATUS status)
 	{
 
 		int human_num = get_radar_value(normal_radar, closest_human);
-		make_radar_full(leds, 0, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
+		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
 	}
 
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
@@ -536,7 +537,7 @@ void scan_done(void *arg, STATUS status)
 	if(show_score == true)
 	{
 		for(int i = 0; i < score;i++){
-			make_lights(leds, 14-i, colors[NOTEAM *3], colors(NOTEAM *3 +1], colors[NOTEAM*3 + 2]);
+			make_lights(leds, 14-i, colors[NOTEAM *3], colors[NOTEAM *3 +1], colors[NOTEAM*3 + 2]);
 		}
 	}
 
