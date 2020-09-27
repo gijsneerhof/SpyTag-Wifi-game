@@ -51,6 +51,8 @@ static volatile os_timer_t begin_timer;
 static volatile os_timer_t game_timer;
 static volatile os_timer_t end_timer;
 
+static volatile os_timer_t score_display_timer;
+
 static struct espconn *pUdpServer;
 usr_conf_t *UsrCfg = (usr_conf_t *)(SETTINGS.UserData);
 //uint8_t last_leds[40*3] = {0};
@@ -70,18 +72,10 @@ int prev_state;
 
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
-int normal_radar[7] = {-90, -85, -80, -70, -60, -50, -40};
+int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
-int human_radar[7] = {-95, -90, -85, -80, -70, -60, -55};
-
-int dead_amount_inc[7] = {40, 80, 120, 160, 200, 240, 280};
-
-int undead_amount_inc[8] = {0, 66, 128, 190, 252, 314, 376, 438};
-
-int zombie_health_inc[8] = {0, 600, 1200, 1800, 2400, 3000, 3600, 4200};
-
-int colors[12 * 3] = {0x01, 0x01, 0x01, //human
-					  0x00, 0x01, 0x00, //Zombie
+int colors[12 * 3] = {0x00, 0x01, 0x00, //human
+					  0x01, 0x00, 0x00, //Zombie
 					  0x00, 0x04, 0x00, //Superzombie
 					  0x01, 0x00, 0x00, //Dead
 					  0x01, 0x00, 0x00, //BlueTeam
@@ -105,12 +99,17 @@ int power_depletion = 4800;
 int light_level = 0x60;
 
 bool show_time = false;
+bool show_score = false;
 
-int timer_index = 2;
+int score = 0;
+
+unsigned long score_cooldown = 0;
+
+int timer_index = 3; //set 15 minutes
 int times[8] = {5, 10, 15, 20, 30, 40, 50, 60};
 
-int sensitivity_index = 5;
-float sensitivities[7] = {-30.0, -32.0, -34.0, -36.0, -38.0, -40.0, -42.0};
+int sensitivity_index = 5; //set  -50
+float sensitivities[7] = {-30.0, -34.0, -38.0, -42.0, -46.0, -50.0, -54.0};
 
 int begin_time = 15;
 
@@ -146,11 +145,9 @@ static void ICACHE_FLASH_ATTR gameTimer(void *arg)
 // When done, user_scan will be called
 static void ICACHE_FLASH_ATTR begin_game_func(void *arg)
 {
-	if(state == ZOMBIE){
-		make_radar_full(leds, colors[ZOMBIE*3], colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
-	}else{
-		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
-	}
+	
+	make_radar_full(leds, colors[BLUETEAM*3], colors[BLUETEAM *3+1], colors[BLUETEAM*3+2], begin_time);
+
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 	if (begin_time == 0)
 	{
@@ -252,6 +249,9 @@ void ICACHE_FLASH_ATTR change_state(void)
 	wifi_softap_set_config_current(&softapconfig);
 	wifi_set_opmode(STATIONAP_MODE);
 	wifi_softap_set_config_current(&softapconfig);
+
+	make_radar_full(leds, colors[ZOMBIE *3], colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], 16);
+
 }
 
 
@@ -268,17 +268,13 @@ game_options(void)
 		state = ZOMBIE;
 		change_state();
 	}
-	// %todo: do not start game until start signal is received --> 
+
 	os_timer_disarm(&begin_timer);
 	os_timer_setfn(&begin_timer, (os_timer_func_t *)begin_game_func, NULL);
 	//begin timer settings, should be 20000
 	os_timer_arm(&begin_timer, 2000, 1);
 	begin_game_func(1);
-	if(state == ZOMBIE){
-		make_radar_full(leds, colors[ZOMBIE *3], colors[ZOMBIE *3+1], colors[ZOMBIE*3+2], begin_time);
-	}else{
-		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], begin_time);
-	}
+	make_radar_full(leds, colors[BLUETEAM *3], colors[BLUETEAM *3+1], colors[BLUETEAM*3+2], begin_time);
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 }
@@ -333,82 +329,6 @@ user_scan(void)
 	}
 }
 
-//not used
-void make_radar_gen(char leds[], int side, int r, int g, int b, int num, int max, int led_num)
-{
-	if (side == 0)
-	{
-		int a = led_num;
-		for (a = led_num; a > 0; a = a - 1)
-		{
-
-			if (led_num - a < (int)(num / (max / led_num)))
-			{
-				make_lights(leds, a, r, g, b);
-			}
-			else
-			{
-				make_lights(leds, a, 0, 0, 0);
-			}
-		}
-	}
-
-	else if (side == 1)
-	{
-		int a = 8;
-
-		for (a = 8; a < 8 + led_num; a = a + 1)
-		{
-			if (a < (int)(num / (max / led_num) + 8 + 1))
-			{
-				//printf("turns out it is\n");
-				make_lights(leds, a, r, g, b);
-			}
-			else
-			{
-				//printf("turns out it isnt\n");
-				make_lights(leds, a, 0, 0, 0);
-			}
-		}
-	}
-}
-
-//set single LED
-void make_radar(char leds[], int side, int r, int g, int b, int num)
-{
-	if (side == 0)
-	{
-		int a = 7;
-		for (a = 7; a > 0; a = a - 1)
-		{
-			if (7 - a < num)
-			{
-				make_lights(leds, a, r, g, b);
-			}
-			else
-			{
-				make_lights(leds, a, 0, 0, 0);
-			}
-		}
-	}
-
-	else if (side == 1)
-	{
-		int a = 8;
-		for (a = 8; a < 15; a = a + 1)
-		{
-			if (a < num + 8)
-			{
-				make_lights(leds, a, r, g, b);
-			}
-			else
-			{
-				make_lights(leds, a, 0, 0, 0);
-			}
-		}
-	}
-}
-
 //give all leds up to num the color (r,g,b)
 void make_radar_full(char leds[], int r, int g, int b, int num)
 {
@@ -430,7 +350,7 @@ void make_radar_full(char leds[], int r, int g, int b, int num)
 int get_radar_value(int values[], float distance)
 {
 	int a = 0;
-	for (a = 0; a < 7; a = a + 1)
+	for (a = 0; a < 16; a = a + 1)
 	{
 		if (distance > values[a])
 		{
@@ -461,9 +381,12 @@ int get_radar_value_full(int values[], float distance)
 	return 8;
 }
 
-int cool_adding = 4200;
-
 char macmap[15];
+
+static void ICACHE_FLASH_ATTR end_score_display(void *arg){
+	os_timer_disarm(&end_timer);
+	show_score = false;
+}
 
 
 void scan_done(void *arg, STATUS status)
@@ -477,6 +400,10 @@ void scan_done(void *arg, STATUS status)
 	//This is a human that is not nearby
 	float closest_out_human = -300.0;
 	float closest_human = -300.0;
+
+	//closest noteam (Scorepoint)
+	float closest_out_noteam = -300.0;
+	float closest_noteam = -300.0;
 
 	if (status == OK)
 	{
@@ -538,6 +465,17 @@ void scan_done(void *arg, STATUS status)
 					closest_human = average;
 				}
 			}
+			else if (strcmp(ssid, states[NOTEAM]) == 0)
+			{
+				if (average > closest_out_noteam && average < -50)
+				{
+					closest_out_noteam = average;
+				}
+				if (average > closest_noteam)
+				{
+					closest_noteam = average;
+				}
+			}
 
 			bss_link = bss_link->next.stqe_next;
 		}
@@ -553,32 +491,31 @@ void scan_done(void *arg, STATUS status)
 		{
 			state = ZOMBIE;
 		}
+		if(closest_noteam > sensitivities[sensitivity_index])
+		{
+			if(score_cooldown <=0){
+				score++;
+				show_score = true;
+				if(score >=16){
+					score = 0;
+				}
+				//set timer to stop displaying score
+					os_timer_disarm(&score_display_timer);
+					os_timer_setfn(&score_display_timer, (os_timer_func_t *)end_score_display, NULL);
+					os_timer_arm(&score_display_timer, 10000, 0);
+			}
+		}
 
 		int zombie_num = get_radar_value(normal_radar, closest_zombie);
-		make_radar(leds, 0, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
+		make_radar_full(leds, 0, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
 
-		make_radar(leds, 1, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
-	}
-	else if (state == DEAD)
-	{
-		//do timer
-		dead_amount += 2;
 
-		int dist_num = get_radar_value(dead_amount_inc, dead_amount);
-		make_radar(leds, 0, colors[DEAD * 3], colors[DEAD * 3 + 1], colors[DEAD * 3 + 2], dist_num);
-		make_radar(leds, 1, colors[DEAD * 3], colors[DEAD * 3 + 1], colors[DEAD * 3 + 2], dist_num);
-		if (dead_amount > 300)
-		{
-			state = ZOMBIE;
-		}
 	}
-	else if (state == ZOMBIE || state == SUPERZOMBIE)
+	else if (state == ZOMBIE)
 	{
 
 		int human_num = get_radar_value(normal_radar, closest_human);
-		make_radar(leds, 0, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
-
-		make_radar(leds, 1, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
+		make_radar_full(leds, 0, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
 	}
 
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
@@ -589,11 +526,19 @@ void scan_done(void *arg, STATUS status)
 		make_radar_full(leds, colors[BLUETEAM * 3], colors[BLUETEAM * 3 + 1], colors[BLUETEAM * 3 + 2], count_down_time);
 		WS2812OutBuffer(leds, sizeof(leds), light_level);
 	}
+	if(show_score == true)
+	{
+		for(int i = 0; i < score;i++){
+			make_lights(leds, 14-i, colors[NOTEAM *3], colors(NOTEAM *3 +1], colors[NOTEAM*3 + 2]);
+		}
+	}
 
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 
 	system_os_post(procTaskPrio, 0, 0);
 }
+
+
 
 static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
