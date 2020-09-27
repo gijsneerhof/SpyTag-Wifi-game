@@ -24,4 +24,5 @@ The function `user_init()` in `user/user_main.c` will be run first.
 
 ### Building
 
-use `make burn` to upload to the ESP8266 controller. 
+First do `make erase`, then `make initdefault #init3v3` to set the flash correctly.
+Lastly, use `make burn` to upload to the ESP8266 controller over `/dev/ttyUSB0`
