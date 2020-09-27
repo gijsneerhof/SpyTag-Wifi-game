@@ -76,7 +76,7 @@ int prev_state;
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
 
-int normal_radar[15] = {-300, -90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52. -50};
+int normal_radar[15] = {-300, -90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52, -50};
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
@@ -355,7 +355,7 @@ void make_radar_full(char leds[], int r, int g, int b, int num)
 int get_radar_value(int values[], float distance)
 {
 	int a = 0;
-	for (a = 0; a < 14; a = a + 1)
+	for (a = 0; a < 14; a++)
 	{
 		if (distance > values[a])
 		{
@@ -367,7 +367,7 @@ int get_radar_value(int values[], float distance)
 			return a;
 		}
 	}
-	return 15;
+	return 14;
 }
 
 char macmap[15];
