@@ -39,6 +39,9 @@
 
 #define NOTEAM 7
 
+//B button = GPIO 12
+//A button = GPIO 4
+
 #define NOBUTTONS 208
 #define ABUTTON 221
 #define BBUTTON 210
@@ -266,6 +269,10 @@ game_options(void)
 
 	if(buttons == BBUTTON){
 		state = ZOMBIE;
+		change_state();
+	}
+	if(buttons == ABUTTON){
+		state = NOTEAM;
 		change_state();
 	}
 
