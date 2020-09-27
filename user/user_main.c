@@ -75,7 +75,8 @@ int prev_state;
 
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
-int normal_radar[13] = {-90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52};
+
+int normal_radar[13] = {-90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -60, -60, -60};
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
@@ -505,7 +506,7 @@ void scan_done(void *arg, STATUS status)
 		int human_num = get_radar_value(normal_radar, closest_human);
 		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num+1);
 	}
-
+	//set colors of own team
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
 	make_lights(leds, 15, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
 
