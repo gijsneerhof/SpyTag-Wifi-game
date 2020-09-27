@@ -75,7 +75,7 @@ int prev_state;
 
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
-int normal_radar[14] = {-90, -88, -85, -82, -80, -78, -75, -72, -70, -68, -65, -60, -55, -50};
+int normal_radar[14] = {-90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52 -50};
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
