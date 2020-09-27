@@ -481,7 +481,7 @@ void scan_done(void *arg, STATUS status)
 		}
 		if(closest_noteam > sensitivities[sensitivity_index])
 		{
-			if(score_cooldown <=0){
+			if(!show_score){
 				score++;
 				show_score = true;
 				if(score >=16){
@@ -490,12 +490,13 @@ void scan_done(void *arg, STATUS status)
 				//set timer to stop displaying score
 					os_timer_disarm(&score_display_timer);
 					os_timer_setfn(&score_display_timer, (os_timer_func_t *)end_score_display, NULL);
-					os_timer_arm(&score_display_timer, 10000, 0);
+					os_timer_arm(&score_display_timer, 30000, 0);
 			}
 		}
 
 		int zombie_num = get_radar_value(normal_radar, closest_zombie);
 		make_radar_full(leds, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
+		printf("num zombie leds %d, rssi %d", zombie_num, closest_zombie);
 
 
 	}
@@ -504,6 +505,7 @@ void scan_done(void *arg, STATUS status)
 
 		int human_num = get_radar_value(normal_radar, closest_human);
 		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);
+		printf("num human leds %d, rssi %d", human_num, closest_human);
 	}
 
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
