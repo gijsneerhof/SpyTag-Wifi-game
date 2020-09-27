@@ -75,7 +75,7 @@ int prev_state;
 
 char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
-int normal_radar[14] = {-90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52 -50};
+int normal_radar[14] = {-90, -85, -80, -75, -72, -70, -68, -65, -62 -60, -58, -55, -52, -50};
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
@@ -91,15 +91,9 @@ int colors[12 * 3] = {0x00, 0x01, 0x00, //human
 bool end_game = false;
 
 bool button_pressed = false;
-int dead_amount = 0;
-int zombie_health = 4800;
-int zombie_health_max = 4800;
-int undead_amount = 0;
-int undead_max = 460;
 
 //9400
 //4800
-int power_depletion = 4800;
 
 int light_level = 0x60;
 
@@ -368,6 +362,7 @@ int get_radar_value(int values[], float distance)
 		}
 		else
 		{
+
 			return a;
 		}
 	}
