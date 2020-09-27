@@ -536,7 +536,8 @@ void scan_done(void *arg, STATUS status)
 	}
 	if(show_score == true)
 	{
-		for(int i = 0; i < score;i++){
+		int i = 0;
+		for(i = 0; i < score;i++){
 			make_lights(leds, 14-i, colors[NOTEAM *3], colors[NOTEAM *3 +1], colors[NOTEAM*3 + 2]);
 		}
 	}
