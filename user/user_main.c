@@ -337,10 +337,10 @@ user_scan(void)
 //give all leds up to num the color (r,g,b)
 void make_radar_full(char leds[], int r, int g, int b, int num)
 {
-		int a = 16;
-		for (a = 16; a >= 0; a = a - 1)
+		int a = 0;
+		for (a = 0; a < 16; a++)
 		{
-			if (16 - a < num)
+			if (a <= num)
 			{
 				make_lights(leds, a, r, g, b);
 			}
