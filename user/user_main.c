@@ -42,10 +42,10 @@
 //B button = GPIO 12
 //A button = GPIO 4
 
-#define NOBUTTONS 208
-#define ABUTTON 221
-#define BBUTTON 210
-#define BOTHBUTTONS 223
+#define NOBUTTONS 2
+#define ABUTTON 130
+#define BBUTTON
+#define BOTHBUTTONS 134
 
 static volatile os_timer_t game_timer;
 static volatile os_timer_t end_timer;
