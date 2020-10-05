@@ -44,7 +44,7 @@
 
 #define NOBUTTONS 2
 #define ABUTTON 130
-#define BBUTTON
+#define BBUTTON 6
 #define BOTHBUTTONS 134
 
 static volatile os_timer_t game_timer;
