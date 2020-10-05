@@ -272,6 +272,9 @@ game_options(void)
 	if(buttons == ABUTTON){
 		state = NOTEAM;
 		change_state();
+		make_radar_full(leds, colors[NOTEAM*3], colors[NOTEAM*3 + 1], colors[NOTEAM*3 +2], 16);
+		WS2812OutBuffer(leds, sizeof(leds), light_level);
+		return;
 	}
 
 	os_timer_disarm(&begin_timer);
@@ -497,15 +500,13 @@ void scan_done(void *arg, STATUS status)
 
 		int zombie_num = get_radar_value(normal_radar, closest_zombie);
 		make_radar_full(leds, colors[ZOMBIE * 3], colors[ZOMBIE * 3 + 1], colors[ZOMBIE * 3 + 2], zombie_num);
-		printf("zombie num %d\n", zombie_num);
 
 	}
 	else if (state == ZOMBIE)
 	{
 
 		int human_num = get_radar_value(normal_radar, closest_human);
-		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);	
-		printf("human num %d\n", human_num);	
+		make_radar_full(leds, colors[HUMAN * 3], colors[HUMAN * 3 + 1], colors[HUMAN * 3 + 2], human_num);		
 	}
 	//set colors of own team
 	make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
