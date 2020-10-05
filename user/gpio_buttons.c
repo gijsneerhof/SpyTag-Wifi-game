@@ -69,6 +69,6 @@ uint8_t GetButtons()
 		mask <<= 1;
 	}
 	ret ^= ~32; //GPIO15's logic is inverted.  Don't flip it but flip everything else.
-	//printf("got button %d\n", ret);
+	printf("got button %d\n", ret);
 	return ret;
 }
