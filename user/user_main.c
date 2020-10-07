@@ -207,6 +207,11 @@ static void ICACHE_FLASH_ATTR end_game_func(void *arg)
 		make_lights(leds, 1, 0, 0, 0);
 		make_lights(leds, 0, colors[state * 3], colors[state * 3 + 1], colors[state * 3 + 2]);
 	}
+	int i = 0;
+	for(i = 0; i < score;i++){
+		make_lights(leds, 14-i, colors[NOTEAM *3], colors[NOTEAM *3 +1], colors[NOTEAM*3 + 2]);
+	}
+
 	WS2812OutBuffer(leds, sizeof(leds), light_level);
 	end_state = (end_state + 1) % 2;
 }
