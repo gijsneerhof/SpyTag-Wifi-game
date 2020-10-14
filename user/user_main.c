@@ -31,7 +31,7 @@
 #define HUMAN 0
 #define ZOMBIE 1
 #define SUPERZOMBIE 2
-#define DEAD 3
+#define ENDGAME 3
 
 #define REDTEAM 4
 #define GREENTEAM 5
@@ -73,10 +73,10 @@ struct beacon_stat
 int state;
 int prev_state;
 
-char states[][32] = {"Human", "Zombie", "SuperZombie", "Dead", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
+char states[][32] = {"Human", "Zombie", "SuperZombie", "EndGame", "RedTeam", "GreenTeam", "BlueTeam", "NoTeam"};
 
 
-int normal_radar[15] = {-300, -90, -85, -80, -75, -70, -68, -65, -62 -60, -58, -55, -52, -50, -46};
+int normal_radar[15] = {-300, -90, -85, -80, -75, -70, -65, -62 -60, -58, -55, -52, -50, -46, -42}; 
 
 //int normal_radar[10] = {-100, -95, -90, -85, -80, -75, -70, -65, -60, -55, -50,};
 
@@ -105,7 +105,7 @@ int score = 0;
 
 unsigned long score_cooldown = 0;
 
-int timer_index = 3; //set 15 minutes
+int timer_index = 4; //set 30 minutes
 int times[8] = {5, 10, 15, 20, 30, 40, 50, 60};
 
 int sensitivity_index = 3; //set  -42
@@ -274,10 +274,17 @@ game_options(void)
 		state = ZOMBIE;
 		change_state();
 	}
-	if(buttons == ABUTTON){
+	else if(buttons == ABUTTON){
 		state = NOTEAM;
 		change_state();
 		make_radar_full(leds, colors[NOTEAM*3], colors[NOTEAM*3 + 1], colors[NOTEAM*3 +2], 16);
+		WS2812OutBuffer(leds, sizeof(leds), light_level);
+		return;
+	}
+	else if(buttons = BOTHBUTTONS){
+		state = ENDGAME;
+		change_state();
+		make_radar_full(leds, colors[ENDGAME*3], colors[ENDGAME*3 + 1], colors[ENDGAME*3 +2], 16);
 		WS2812OutBuffer(leds, sizeof(leds), light_level);
 		return;
 	}
@@ -472,6 +479,11 @@ void scan_done(void *arg, STATUS status)
 				{
 					closest_noteam = average;
 				}
+			}
+			else if (strcmp(ssid, states[ENDGAME]) == 0)
+			{
+				os_timer_disarm(&game_timer);
+				end_game = true;
 			}
 
 			bss_link = bss_link->next.stqe_next;
