@@ -269,7 +269,6 @@ game_options(void)
 	int buttons = GetButtons();
 
 	state = HUMAN;
-
 	if(buttons == BBUTTON){
 		state = ZOMBIE;
 		change_state();
@@ -281,7 +280,7 @@ game_options(void)
 		WS2812OutBuffer(leds, sizeof(leds), light_level);
 		return;
 	}
-	else if(buttons = BOTHBUTTONS){
+	else if(buttons == BOTHBUTTONS){
 		state = ENDGAME;
 		change_state();
 		make_radar_full(leds, colors[ENDGAME*3], colors[ENDGAME*3 + 1], colors[ENDGAME*3 +2], 16);
