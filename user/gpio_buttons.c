@@ -11,7 +11,7 @@ volatile uint8_t LastGPIOState;
 
 //static const uint8_t GPID[] = { 0, 12 };
 static const uint8_t GPID[] = {12, 4};
-static const uint8_t Func[] = {FUNC_GPIO12, FUNC_GPIO4);
+static const uint8_t Func[] = {FUNC_GPIO12, FUNC_GPIO4};
 static const int  Periphs[] = { PERIPHS_IO_MUX_MTDI_U, PERIPHS_IO_MUX_GPIO4_U};
 
 
