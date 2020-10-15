@@ -15,26 +15,7 @@ static const uint8_t Func[] = {FUNC_GPIO12, FUNC_GPIO5 };
 static const int  Periphs[] = { PERIPHS_IO_MUX_MTDI_U, PERIPHS_IO_MUX_GPIO5_U };
 
 
-void interupt_test( void * v )
-{
-	int i;
 
-	uint8_t stat = GetButtons();
-
-	for( i = 0; i < 2; i++ )
-	{
-		int mask = 1<<i;
-		if( (stat & mask) != (LastGPIOState & mask) )
-		{
-			HandleButtonEvent( stat, i, (stat & mask)?1:0 );
-		}
-	}
-	LastGPIOState = stat;
-
-	//clear interrupt status
-	uint32  gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
-	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
-}
 
 
 void ICACHE_FLASH_ATTR SetupGPIO()
@@ -43,15 +24,13 @@ void ICACHE_FLASH_ATTR SetupGPIO()
 
 	int i;
 	ETS_GPIO_INTR_DISABLE(); // Disable gpio interrupts
-	ETS_GPIO_INTR_ATTACH(interupt_test, 0); // GPIO12 interrupt handler
+
 	for( i = 0; i < 2; i++ )
 	{
 		PIN_FUNC_SELECT(Periphs[i], Func[i]);
 		PIN_DIR_INPUT = 1<<GPID[i];
-		gpio_pin_intr_state_set(GPIO_ID_PIN(GPID[i]), 3); // Interrupt on any GPIO12 edge
-		GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(GPID[i])); // Clear GPIO12 status
+		printf("set GPIO %d as input\n", GPIOD[i]);
 	}
-	ETS_GPIO_INTR_ENABLE(); // Disable gpio interrupts
 	LastGPIOState = GetButtons();
  	printf( "Setup GPIO Complete\n" );
 }
@@ -65,8 +44,8 @@ uint8_t GetButtons()
 	int mask = 1;
 	for( i = 0; i < 2; i++ )
 	{
-		printf("ret %d, i %d, mask %d", ret, i , mask)
 		ret |= (pin & (1<<GPID[i]))?mask:0;
+		printf("[ret %d, i %d, mask %d]", ret, i , mask)
 		mask <<= 1;
 	}
 	ret ^= ~32; //GPIO15's logic is inverted.  Don't flip it but flip everything else.
