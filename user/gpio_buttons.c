@@ -29,6 +29,7 @@ void ICACHE_FLASH_ATTR SetupGPIO()
 	{
 		PIN_FUNC_SELECT(Periphs[i], Func[i]);
 		PIN_DIR_INPUT = 1<<GPID[i];
+		PIN_PULLUP_EN(Periphs[i]);
 		printf("set GPIO %d as input\n", GPID[i]);
 	}
 	LastGPIOState = GetButtons();
