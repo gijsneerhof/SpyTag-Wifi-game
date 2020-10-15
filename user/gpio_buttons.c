@@ -21,7 +21,7 @@ void interupt_test( void * v )
 
 	uint8_t stat = GetButtons();
 
-	for( i = 0; i < 8; i++ )
+	for( i = 0; i < 2; i++ )
 	{
 		int mask = 1<<i;
 		if( (stat & mask) != (LastGPIOState & mask) )
@@ -44,7 +44,7 @@ void ICACHE_FLASH_ATTR SetupGPIO()
 	int i;
 	ETS_GPIO_INTR_DISABLE(); // Disable gpio interrupts
 	ETS_GPIO_INTR_ATTACH(interupt_test, 0); // GPIO12 interrupt handler
-	for( i = 0; i < 8; i++ )
+	for( i = 0; i < 2; i++ )
 	{
 		PIN_FUNC_SELECT(Periphs[i], Func[i]);
 		PIN_DIR_INPUT = 1<<GPID[i];
@@ -63,7 +63,7 @@ uint8_t GetButtons()
 	int i;
 	uint32_t pin = PIN_IN;
 	int mask = 1;
-	for( i = 0; i < 8; i++ )
+	for( i = 0; i < 2; i++ )
 	{
 		printf("ret %d, i %d, mask %d", ret, i , mask)
 		ret |= (pin & (1<<GPID[i]))?mask:0;
