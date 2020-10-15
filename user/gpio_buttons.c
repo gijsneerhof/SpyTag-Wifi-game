@@ -10,9 +10,9 @@ void gpio_pin_intr_state_set(uint32 i, GPIO_INT_TYPE intr_state);
 volatile uint8_t LastGPIOState;
 
 //static const uint8_t GPID[] = { 0, 12 };
-static const uint8_t GPID[] = {12, 5};
-static const uint8_t Func[] = {FUNC_GPIO12, FUNC_GPIO5 };
-static const int  Periphs[] = { PERIPHS_IO_MUX_MTDI_U, PERIPHS_IO_MUX_GPIO5_U };
+static const uint8_t GPID[] = {0, 12, 5};
+static const uint8_t Func[] = {FUNC_GPIO0, FUNC_GPIO12, FUNC_GPIO5 };
+static const int  Periphs[] = {PERIPHS_IO_MUX_GPIO0_U, PERIPHS_IO_MUX_MTDI_U, PERIPHS_IO_MUX_GPIO5_U };
 
 
 
@@ -25,7 +25,7 @@ void ICACHE_FLASH_ATTR SetupGPIO()
 	int i;
 	ETS_GPIO_INTR_DISABLE(); // Disable gpio interrupts
 
-	for( i = 0; i < 2; i++ )
+	for( i = 0; i < 3; i++ )
 	{
 		PIN_FUNC_SELECT(Periphs[i], Func[i]);
 		PIN_DIR_INPUT = 1<<GPID[i];
