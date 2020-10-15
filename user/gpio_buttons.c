@@ -42,7 +42,7 @@ uint8_t GetButtons()
 	int i;
 	uint32_t pin = PIN_IN;
 	int mask = 1;
-	for( i = 0; i < 2; i++ )
+	for( i = 0; i < 3; i++ )
 	{
 		ret |= (pin & (1<<GPID[i]))?mask:0;
 		printf("[ret %d, i %d, mask %d]", ret, i , mask)
