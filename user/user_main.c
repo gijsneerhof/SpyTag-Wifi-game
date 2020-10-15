@@ -398,6 +398,7 @@ void scan_done(void *arg, STATUS status)
 	system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
 	uint8 ssid[33];
 	char temp[128];
+	float closest_zombie = -300.0;
 
 	//This is a human that is not nearby
 	float closest_out_human = -300.0;
