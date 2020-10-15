@@ -398,8 +398,6 @@ void scan_done(void *arg, STATUS status)
 	system_os_task(user_scan, procTaskPrio, procTaskQueue, procTaskQueueLen);
 	uint8 ssid[33];
 	char temp[128];
-	float closest_zombie = -300.0;
-	float closest_dead = -300.0;
 
 	//This is a human that is not nearby
 	float closest_out_human = -300.0;
@@ -448,13 +446,6 @@ void scan_done(void *arg, STATUS status)
 				if (average > closest_zombie)
 				{
 					closest_zombie = average;
-				}
-			}
-			else if (strcmp(ssid, states[DEAD]) == 0)
-			{
-				if (average > closest_dead)
-				{
-					closest_dead = average;
 				}
 			}
 
